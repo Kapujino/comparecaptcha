@@ -13,16 +13,19 @@ def configure_logging():
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-def compare_images(image_path, known_folder, unknown_folder):
-    # get list of ".jpg" files in the "known" folder
-    known_files = [file for file in os.listdir(known_folder) if file.endswith(".jpg")]
-
-    for known_file in known_files:
-        known_file_path = os.path.join(known_folder, known_file)
-        # compare "sample.jpg" with each ".jpg" file in the "known" folder
-        if file_compare(image_path, known_file_path):
-            return known_file
-
+def compare_images(image_path, known_folder):
+    # traverse through subdirs
+    for root, dirs, files in os.walk(known_folder):
+        for file in files:
+            #logging.info(f"file = {file}")
+            # check if .jpg
+            if file.lower().endswith(".jpg"):
+                known_file_path = os.path.join(root, file)
+                #logging.info(f"known_file_path = {known_file_path}")
+                # compare images
+                if file_compare(image_path, known_file_path):
+                    # return folder name
+                    return os.path.basename(root)
     return None
 
 def file_compare(file1, file2):
@@ -39,7 +42,7 @@ if __name__ == "__main__":
     unknown_folder = "unknown"
 
     if os.path.exists(sample_file):
-        match = compare_images(sample_file, known_folder, unknown_folder)
+        match = compare_images(sample_file, known_folder)
         if match:
             logging.info(f"Match found: {match}")
             # remove the initial "sample.jpg" file
@@ -47,7 +50,7 @@ if __name__ == "__main__":
 
             # write the filename without extension to "result.txt"
             with open("result.txt", "w") as result_file:
-                result_file.write(os.path.splitext(match)[0])
+                result_file.write(match)
         else:
             timestamp = time.strftime("%Y%m%d%H%M%S", time.localtime())
             new_unknown_file = f"unknown_{timestamp}.jpg"
